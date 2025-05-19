@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - TechInvestorAI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+  <div class="bg-gray-800 p-8 rounded shadow-md w-full max-w-md space-y-4">
+    <h2 class="text-2xl font-bold text-center">Login</h2>
+    <input id="email" type="email" placeholder="Email" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" />
+    <input id="password" type="password" placeholder="Password" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" />
+    <button onclick="login()" class="w-full bg-green-600 hover:bg-green-700 p-2 rounded text-white">Login</button>
+    <p id="status" class="text-center text-sm mt-2"></p>
+  </div>
+
+  <script type="module">
+    import { auth, signInWithEmailAndPassword } from './firebase-config.js';
+
+    window.login = async function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const status = document.getElementById("status");
+
+      try {
+        const userCred = await signInWithEmailAndPassword(auth, email, password);
+        if (!userCred.user.emailVerified) {
+          status.textContent = "❌ Please verify your email before logging in.";
+          return;
+        }
+        status.textContent = "✅ Login successful. Redirecting...";
+        setTimeout(() => window.location.href = "index.html", 1500);
+      } catch (err) {
+        status.textContent = "❌ " + err.message;
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Details - TechInvestorAI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div class="p-6 max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 id="stockTitle" class="text-2xl font-bold">Loading...</h1>
+      <button onclick="goHome()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Home</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div class="bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Stock Information</h2>
+        <ul id="stockInfo" class="space-y-2 text-gray-300">
+          <!-- Fetched data will appear here -->
+        </ul>
+      </div>
+
+      <div class="bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Latest News</h2>
+        <ul id="stockNews" class="space-y-2 text-gray-300">
+          <!-- News items here -->
+        </ul>
+      </div>
+    </div>
+
+    <div class="bg-gray-800 p-4 rounded shadow">
+      <h2 class="text-xl font-semibold mb-4">Stock Chart</h2>
+      <div class="tradingview-widget-container">
+        <div id="tradingview_chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    const FINNHUB_API = "d0lnd09r01qpni307gmgd0lnd09r01qpni307gn0";
+
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    function goHome() {
+      window.location.href = 'index.html';
+    }
+
+    async function fetchStockDetails(symbol) {
+      const quote = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API}`).then(res => res.json());
+      const profile = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_API}`).then(res => res.json());
+
+      const infoList = document.getElementById("stockInfo");
+      infoList.innerHTML = `
+        <li><strong>Current Price:</strong> $${quote.c}</li>
+        <li><strong>High:</strong> $${quote.h}</li>
+        <li><strong>Low:</strong> $${quote.l}</li>
+        <li><strong>Open:</strong> $${quote.o}</li>
+        <li><strong>Previous Close:</strong> $${quote.pc}</li>
+        <li><strong>Market Cap:</strong> ${profile.marketCapitalization || "N/A"} B</li>
+        <li><strong>P/E Ratio:</strong> ${profile.peBasicExclExtraTTM || "N/A"}</li>
+        <li><strong>Exchange:</strong> ${profile.exchange || "N/A"}</li>
+      `;
+    }
+
+    async function fetchNews(symbol) {
+      const news = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=2024-01-01&to=2024-12-31&token=${FINNHUB_API}`).then(res => res.json());
+      const topNews = news.slice(0, 5);
+      const newsList = document.getElementById("stockNews");
+      newsList.innerHTML = topNews.map(n => `<li><a href="${n.url}" class="text-blue-400 hover:underline" target="_blank">${n.headline}</a></li>`).join('');
+    }
+
+    function loadChart(symbol) {
+      const container = document.getElementById("tradingview_chart");
+      container.innerHTML = '';
+      const script = document.createElement("script");
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-chart.js";
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        "symbol": symbol,
+        "width": "100%",
+        "height": 500,
+        "locale": "en",
+        "colorTheme": "dark",
+        "isTransparent": false,
+        "autosize": true,
+        "showVolume": true,
+        "hideIdeas": true
+      });
+      container.appendChild(script);
+    }
+
+    const stockSymbol = getQueryParam("symbol");
+    if (stockSymbol) {
+      document.getElementById("stockTitle").textContent = `Details for ${stockSymbol}`;
+      fetchStockDetails(stockSymbol);
+      fetchNews(stockSymbol);
+      loadChart(stockSymbol);
+    } else {
+      document.getElementById("stockTitle").textContent = "No stock symbol provided.";
+    }
+  </script>
+</body>
+</html>
